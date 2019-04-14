@@ -21,10 +21,14 @@ function ready() {
 
     function removeCartItem(event) {
         // Get the button element that triggered the event
-        var buttonClicked = event.target
+        var buttonClicked = event.target;
         // Remove the whole cart-row which is 2 levels above the button
-        buttonClicked.parentElement.parentElement.remove()
-        updateCartTotal()
+        buttonClicked.parentElement.parentElement.remove();
+        updateCartTotal();
+        // Remove the local storage variables after a ticket is removed from cart
+        localStorage.removeItem("date");
+        localStorage.removeItem("city");
+        localStorage.removeItem("arena");
     }
 
 
@@ -157,10 +161,67 @@ function ready() {
         }
         // Update the total
         updateCartTotal();
+        // Clear Local Storage
+        localStorage.clear();
     }
 
 
+    /*
+    **********Adding Tickets To Cart**********
+    */
 
+    // Listen to changes in LocalStorage from index.html
+    window.addEventListener("storage", function () {
+        let date = localStorage.getItem("date");
+        let city = localStorage.getItem("city");
+        let arena = localStorage.getItem("arena");
+
+        addTicketToCart(date, city, arena);
+    });
+
+
+    function addTicketToCart(date, city, arena) {
+
+        // If the ticket added is already in cart, terminate the function
+        let titles = document.getElementsByClassName("cart-item-title");
+        for (i = 0; i < titles.length; i++) {
+            if (titles[i].textContent === `${date} ${city} Ticket At ${arena}`) {
+                return
+            }
+        }
+
+        if ((date && city && arena) == null) {
+            return
+        }
+
+        // Dynamically insert arguments into the HTML of cart row
+        let cartRowContents = `
+            <div class="cart-item cart-column">
+                <span class="cart-item-title">${date} ${city} Ticket At ${arena}</span>
+            </div>
+            <span class="cart-price cart-column">$189</span>
+            <div class="cart-quantity cart-column">
+                <input class="cart-quantity-input" type="number" value="1">
+                <button class="btn btn-danger" role="button">REMOVE</button>
+            </div>
+            `
+        // Create a div, give it the class cart-row, and the HTML of cart-row
+        let newCartRow = document.createElement('div');
+        newCartRow.classList.add('cart-row');
+        newCartRow.innerHTML = cartRowContents;
+        // Append newCartRow to cartItems
+        var cartItems = document.getElementsByClassName("cart-items")[0];
+        cartItems.append(newCartRow);
+
+        // Enable row deletion for newCartRow
+        newCartRow.getElementsByClassName("btn-danger")[0].addEventListener('click', removeCartItem)
+
+        // Enable input quantity update for newCartRow
+        newCartRow.getElementsByClassName("cart-quantity-input")[0].addEventListener('change', quantityChanged);
+
+        updateCartTotal();
+
+    }
 
 
 }
